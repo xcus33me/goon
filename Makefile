@@ -1,8 +1,8 @@
 build:
-	@go build -o bin/fact
+	@go build -o bin/goon cmd/api/main.go
 
 run: build
-	./bin/fact
+	@./bin/goon
 
 test:
-	go test -v ./...
+	@go test -v ./...
