@@ -2,9 +2,7 @@ package main
 
 import (
 	database "goon/db"
-	repo "goon/repository"
 	"log"
-	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -23,9 +21,5 @@ func main() {
 	database.CleanUp()
 	database.Sync()
 
-	user, err := repo.CreateUser("block", "ngachain@yandex.ru", "12345", "123", time.Now())
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	println(user)
+	// todo: Register() here.
 }

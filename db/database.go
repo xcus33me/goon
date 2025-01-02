@@ -1,7 +1,7 @@
 package database
 
 import (
-	"goon/data"
+	"goon/models"
 	"os"
 
 	"gorm.io/driver/postgres"
@@ -23,7 +23,7 @@ func Connect() error {
 }
 
 func Sync() {
-	DB.AutoMigrate(&data.User{})
+	DB.AutoMigrate(&models.User{})
 }
 
 func CleanUp() {
