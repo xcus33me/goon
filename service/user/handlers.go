@@ -40,18 +40,12 @@ func (h *Handler) handleRegister(c *gin.Context) {
 		return
 	}
 
-	user, err := h.store.GetUserByEmail(payload.Email)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to check user existence",
-		})
-		return
-	}
-
+	user, _ := h.store.GetUserByEmail(payload.Email)
 	if user != nil {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "User with this email already exists",
 		})
+		return
 	}
 
 	hashedPassword, err := auth.HashPassword(payload.Email)
@@ -59,6 +53,7 @@ func (h *Handler) handleRegister(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to hash password",
 		})
+		return
 	}
 
 	verificationToken := uuid.New().String()
