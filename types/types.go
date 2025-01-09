@@ -10,7 +10,7 @@ import (
 type UserStore interface {
 	GetUserByID(id uuid.UUID) (*User, error)
 	GetUserByEmail(email string) (*User, error)
-	CreateUser(user User) error
+	CreateUser(user *User) error
 }
 
 type UserRole string

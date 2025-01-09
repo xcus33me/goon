@@ -64,7 +64,7 @@ func (h *Handler) handleRegister(c *gin.Context) {
 	verificationToken := uuid.New().String()
 	tokenExpiresAt := time.Now().Add(25 * time.Hour)
 
-	newUser := types.User{
+	newUser := &types.User{
 		ID:                uuid.New(),
 		Name:              payload.Name,
 		Email:             payload.Email,

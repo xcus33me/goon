@@ -39,6 +39,6 @@ func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 	return &user, nil
 }
 
-func (s *Store) CreateUser(user types.User) error {
+func (s *Store) CreateUser(user *types.User) error {
 	return s.db.Create(user).Error
 }
