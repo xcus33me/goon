@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    container_name: api-gateway-service
+    build:
+      context: ./services/user
+      dockerfile: docker/api_gateway.dockerfile
+    ports:
+      - "8083:8083"
+    depends_on:
+      - user-service
+      - chat-service
+      - notification-service
+  
+  user-service:
+    container_name: user-service
+    build:
+      context: ./services/user
+      dockerfile: docker/user.Dockerfile
+    depends_on:
+      - user_db
+      - kafka
+      - redis
+  
+  chat-service:
+    container_name: chat-service
+    build:
+      context: ./services/chat
+      dockerfile: docker/chat.Dockerfile
+    depends_on:
+      - kafka
+      - chat_db
+      - redis
+  
+  notification-service:
+    container_name: notification-service
+    build: 
+      context: ./services/notification
+      dockerfile: docker/notification.Dockerfile
+    depends_on:
+      - mongo
+
+  user_db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${USER_DB_USER}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
+      POSTGRES_DB: ${USER_DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USER} -d ${USER_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chat_db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${CHAT_DB_USER}
+      POSTGRES_PASSWORD: ${CHAT_DB_PASSWORD}
+      POSTGRES_DB: ${CHAT_DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - chat_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CHAT_DB_USER} -d ${CHAT_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+      
+  elasticsearch:
+    image: elasticsearch:7.10.0
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+  
+  logstash:
+    image: logstash:7.10.0
+    volumes:
+      - ./configs/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "5000:5000"
+    depends_on:
+      - elasticsearch
+  
+  kibana:
+    image: kibana:7.10.0
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  prometheus:
+    image: prom/prometheus:v2.26.0
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  
+  grafana:
+    image: grafana/grafana:7.5.2
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
