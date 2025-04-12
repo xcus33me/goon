@@ -6,12 +6,23 @@ import (
 )
 
 type Config struct {
-	App App
+	App     App
+	HTTP    HTTP
+	Log     Log
+	PG      PG
+	RMQ     RMQ
+	Metrics Metrics
+	Swagger Swagger
 }
 
 type App struct {
 	Name    string `env:"APP_NAME,required"`
 	Version string `env:"APP_VERSION,required"`
+}
+
+type HTTP struct {
+	Port           string `env:"HTTP_PORT,required"`
+	UsePreforkMode bool   `env:"HTTP_USE_PREFORK_MODE" envDefault:"false"`
 }
 
 type Log struct {
