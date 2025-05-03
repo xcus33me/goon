@@ -14,7 +14,7 @@ type userRepo struct {
 	*postgres.Postgres
 }
 
-func NewUserStorage(pg *postgres.Postgres) *userRepo {
+func NewUserRepo(pg *postgres.Postgres) *userRepo {
 	return &userRepo{pg}
 }
 
