@@ -4,6 +4,7 @@ import (
 	"auth/config"
 	"auth/internal/usecase"
 	"auth/pkg/logger"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"

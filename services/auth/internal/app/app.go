@@ -8,7 +8,6 @@ import (
 	"auth/pkg/logger"
 	"auth/pkg/postgres"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"os"
 	"os/signal"
 	"syscall"

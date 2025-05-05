@@ -3,6 +3,7 @@ package v1
 import (
 	"auth/internal/usecase"
 	"auth/pkg/logger"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
@@ -19,4 +20,5 @@ func NewAuthRoutes(g *echo.Group, t usecase.AuthUseCase, l logger.Logger) {
 		l: l,
 		v: validator.New(),
 	}
+
 }
