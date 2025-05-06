@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	App     App
-	HTTP    HTTP
-	Log     Log
-	PG      PG
-	RMQ     RMQ
+	App  App
+	HTTP HTTP
+	Log  Log
+	PG   PG
+	//RMQ     RMQ
 	Metrics Metrics
 	Swagger Swagger
 	Auth    Auth

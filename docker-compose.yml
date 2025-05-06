@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-db-environment: &x-db-environment
   POSTGRES_SSL_MODE: "disable"
   POSTGRES_HOST: "auth-db"
@@ -8,8 +6,7 @@ x-db-environment: &x-db-environment
   POSTGRES_PASSWORD: "hawktuahsybau"
   POSTGRES_USER: "postgres"
 
-x-backend-app-environment: &x-backend-app-environment
-  # APPLICATION
+x-backend-app-environment: &x-backend-app-environment # APPLICATION
   APP_NAME: "goon"
   APP_VERSION: "0.0.1"
   # HTTP
@@ -24,6 +21,8 @@ x-backend-app-environment: &x-backend-app-environment
   METRICS_ENABLED: "true"
   # Swagger
   SWAGGER_ENABLED: "true"
+  # Auth
+  JWT_SECRET: "mysecretsybau"
 
 services:
   auth-service:
