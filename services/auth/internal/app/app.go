@@ -2,8 +2,9 @@ package app
 
 import (
 	"auth/config"
-	"auth/internal/repo"
-	"auth/internal/usecase"
+	"auth/internal/controller/http"
+	"auth/internal/repo/persistent"
+	"auth/internal/usecase/auth"
 	"auth/pkg/httpserver"
 	"auth/pkg/logger"
 	"auth/pkg/postgres"
@@ -24,11 +25,15 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
-	// Use case
-	authUseCase := usecase.NewAuthUseCase(repo.NewUserStorage(pg))
+	// Usecase
+	authUseCase := auth.New(
+		persistent.New(pg),
+		cfg.Auth.JWTSecret,
+	)
 
 	// HttpServer
 	httpServer := httpserver.New(httpserver.Port(cfg.HTTP.Port), httpserver.Prefork(cfg.HTTP.UsePreforkMode))
+	http.NewRouter(httpServer.App, cfg, authUseCase, l)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)

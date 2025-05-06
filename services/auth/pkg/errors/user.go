@@ -11,4 +11,5 @@ var (
 	ExceededMaxLoginLength    = errors.New("exceeded max login length")
 	PasswordTooShort          = errors.New("password too short")
 	LoginTooShort             = errors.New("login too short")
+	FailedToGenerateToken     = errors.New("failed to sign token")
 )

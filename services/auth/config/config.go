@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/caarlos0/env/v11"
 )
 
@@ -13,6 +14,7 @@ type Config struct {
 	RMQ     RMQ
 	Metrics Metrics
 	Swagger Swagger
+	Auth    Auth
 }
 
 type App struct {
@@ -46,6 +48,10 @@ type Metrics struct {
 
 type Swagger struct {
 	Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
+}
+
+type Auth struct {
+	JWTSecret string `env:"JWT_SECRET,required"`
 }
 
 func NewConfig() (*Config, error) {
