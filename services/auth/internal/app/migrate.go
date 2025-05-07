@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	_defaultAttempts = 20
+	_defaultAttempts = 3
 	_defaultTimeout  = time.Second
 )
 

@@ -2,15 +2,16 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
 	_defaultMaxPoolSize  = 1
-	_defaultConnAttempts = 10
+	_defaultConnAttempts = 3
 	_defaultConnTimeout  = time.Second
 )
 
@@ -23,6 +24,8 @@ type Postgres struct {
 }
 
 func New(url string, opts ...Option) (*Postgres, error) {
+	url += "?sslmode=disable"
+
 	pg := &Postgres{
 		maxPoolSize:  _defaultMaxPoolSize,
 		connAttempts: _defaultConnAttempts,

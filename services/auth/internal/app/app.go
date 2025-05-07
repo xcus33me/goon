@@ -25,6 +25,8 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	l.Info("Auth service in action🔥🚀")
+
 	// Usecase
 	authUseCase := auth.New(
 		persistent.New(pg),

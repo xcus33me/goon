@@ -28,7 +28,6 @@ services:
   auth-service:
     container_name: auth-service
     platform: linux/amd64
-    pid: "host"
     build:
       context: ./services/auth
     environment:
@@ -43,7 +42,7 @@ services:
           - auth.lvh.me
 
   auth-db:
-    image: postgres:17-alpine
+    image: postgres:16.2-alpine
     environment:
       <<: *x-db-environment
     volumes:
