@@ -8,5 +8,4 @@ type Register struct {
 type Login struct {
 	ID    int    `json:"id"`
 	Login string `json:"login"`
-	Token string `json:"token"`
 }

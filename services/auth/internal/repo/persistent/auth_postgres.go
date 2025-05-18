@@ -14,7 +14,7 @@ func New(pg *postgres.Postgres) *AuthRepo {
 }
 
 func (r *AuthRepo) CreateUser(user *entity.User) error {
-	query := "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id"
+	query := "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id"
 	return r.Db.QueryRow(query, user.Login, user.PasswordHash).Scan(&user.ID)
 }
 

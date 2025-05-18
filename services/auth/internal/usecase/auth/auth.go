@@ -26,7 +26,7 @@ func New(repo repo.AuthRepo, jwtSecret string) *UseCase {
 
 func (uc *UseCase) generateToken(user *entity.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.ID,
+		"uid":   user.ID,
 		"login": user.Login,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})

@@ -18,8 +18,9 @@ func NewRouter(e *echo.Echo, cfg *config.Config, a usecase.Auth, l logger.Interf
 	//	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	//}
 
-	appV1Group := e.Group("v1")
+	appV1Group := e.Group("/v1")
 	{
+		//appV1Group.Use(authMiddleware.Auth(cfg.Auth.JWTSecret))
 		v1.NewAuthRoutes(appV1Group, a, l)
 	}
 }
