@@ -74,8 +74,6 @@ func (uc *UseCase) Register(login, password string) (*entity.User, error) {
 	user := &entity.User{
 		Login:        login,
 		PasswordHash: string(hash),
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
 	}
 
 	if err := uc.repo.CreateUser(user); err != nil {

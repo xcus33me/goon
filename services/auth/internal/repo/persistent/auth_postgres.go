@@ -14,8 +14,8 @@ func New(pg *postgres.Postgres) *AuthRepo {
 }
 
 func (r *AuthRepo) CreateUser(user *entity.User) error {
-	query := "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id"
-	return r.Db.QueryRow(query, user.Login, user.PasswordHash).Scan(&user.ID)
+	query := "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id, created_at, updated_at"
+	return r.Db.QueryRow(query, user.Login, user.PasswordHash).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 
 func (r *AuthRepo) FindByLogin(login string) (*entity.User, error) {
