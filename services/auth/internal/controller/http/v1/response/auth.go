@@ -1,11 +1,11 @@
 package response
 
 type Register struct {
-	ID    int    `json:"id"`
+	ID    int64  `json:"id"`
 	Login string `json:"login"`
 }
 
 type Login struct {
-	ID    int    `json:"id"`
+	ID    int64  `json:"id"`
 	Login string `json:"login"`
 }
