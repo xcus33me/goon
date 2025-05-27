@@ -1,6 +1,11 @@
 package repo
 
-import "auth/internal/entity"
+import (
+	"auth/internal/entity"
+	"time"
+)
+
+//go:generate mockgen -source=contracts.go -destination=../usecase/mocks_repo_test.go -package=usecase_test
 
 type (
 	AuthRepo interface {
@@ -12,3 +17,9 @@ type (
 		Notify()
 	}
 )
+
+type UpdatePasswordDTO struct {
+	ID              int64
+	NewPasswordHash string
+	UpdatedAt       time.Time
+}
