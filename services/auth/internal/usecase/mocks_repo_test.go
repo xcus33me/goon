@@ -11,6 +11,7 @@ package usecase_test
 
 import (
 	entity "auth/internal/entity"
+	repo "auth/internal/repo"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -67,6 +68,21 @@ func (m *MockAuthRepo) FindByLogin(login string) (*entity.User, error) {
 func (mr *MockAuthRepoMockRecorder) FindByLogin(login any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByLogin", reflect.TypeOf((*MockAuthRepo)(nil).FindByLogin), login)
+}
+
+// UpdatePasswordByID mocks base method.
+func (m *MockAuthRepo) UpdatePasswordByID(request *repo.UpdatePasswordRequest) (*repo.UpdatePasswordResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePasswordByID", request)
+	ret0, _ := ret[0].(*repo.UpdatePasswordResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePasswordByID indicates an expected call of UpdatePasswordByID.
+func (mr *MockAuthRepoMockRecorder) UpdatePasswordByID(request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePasswordByID", reflect.TypeOf((*MockAuthRepo)(nil).UpdatePasswordByID), request)
 }
 
 // MockAuthWebAPI is a mock of AuthWebAPI interface.

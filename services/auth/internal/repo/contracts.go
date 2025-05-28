@@ -11,6 +11,7 @@ type (
 	AuthRepo interface {
 		CreateUser(user *entity.User) error
 		FindByLogin(login string) (*entity.User, error)
+		UpdatePasswordByID(request *UpdatePasswordRequest) (*UpdatePasswordResponse, error)
 	}
 
 	AuthWebAPI interface {
@@ -18,8 +19,12 @@ type (
 	}
 )
 
-type UpdatePasswordDTO struct {
-	ID              int64
-	NewPasswordHash string
-	UpdatedAt       time.Time
+type UpdatePasswordRequest struct {
+	ID           int64
+	PasswordHash string
+}
+
+type UpdatePasswordResponse struct {
+	ID        int64
+	UpdatedAt time.Time
 }

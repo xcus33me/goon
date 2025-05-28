@@ -8,5 +8,6 @@ type (
 	Auth interface {
 		Login(login, password string) (*entity.User, string, error)
 		Register(login, password string) (*entity.User, error)
+		UpdatePassword(userID int64, password string) error
 	}
 )
