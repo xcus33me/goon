@@ -4,6 +4,7 @@ import (
 	"auth/internal/entity"
 	"auth/internal/repo"
 	e "auth/pkg/errors"
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,7 +34,7 @@ func (uc *UseCase) generateToken(user *entity.User) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(uc.jwtSecret))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w: could not sign token: %v", e.FailedToGenerateToken, err)
 	}
 
 	return tokenString, nil
@@ -42,7 +43,10 @@ func (uc *UseCase) generateToken(user *entity.User) (string, error) {
 func (uc *UseCase) Login(login, password string) (*entity.User, string, error) {
 	user, err := uc.repo.FindByLogin(login)
 	if err != nil {
-		return nil, "", e.UserNotFound
+		if errors.Is(err, repo.ErrNotFound) {
+			return nil, "", e.WrongCredentials
+		}
+		return nil, "", err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
@@ -81,4 +85,26 @@ func (uc *UseCase) Register(login, password string) (*entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (uc *UseCase) UpdatePassword(userID int64, password string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("%w: %v", e.HashingFailed, err)
+	}
+
+	request := &repo.UpdatePasswordRequest{
+		ID:           userID,
+		PasswordHash: string(hash),
+	}
+
+	_, err = uc.repo.UpdatePasswordByID(request)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return e.UserNotFound
+		}
+		return err
+	}
+
+	return nil
 }
