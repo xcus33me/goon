@@ -3,7 +3,7 @@ x-db-environment: &x-db-environment
   POSTGRES_HOST: "auth-db"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "db"
-  POSTGRES_PASSWORD: "hawktuahsybau"
+  POSTGRES_PASSWORD: "sybau1234"
   POSTGRES_USER: "postgres"
 
 x-backend-app-environment: &x-backend-app-environment # APPLICATION
@@ -16,7 +16,7 @@ x-backend-app-environment: &x-backend-app-environment # APPLICATION
   LOG_LEVEL: "debug"
   # Postgres
   PG_POOL_MAX: "2"
-  PG_URL: "postgres://postgres:hawktuahsybau@auth-db:5432/db"
+  PG_URL: "postgres://postgres:sybau1234@auth-db:5432/db"
   # Metrics
   METRICS_ENABLED: "true"
   # Swagger
@@ -48,7 +48,7 @@ services:
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "6543:5432"
     networks:
       app_network:
         aliases:
