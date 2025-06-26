@@ -16,7 +16,7 @@ import (
 
 func Run(cfg *config.Config) {
 	// Logger
-	l := logger.New(cfg.Log.Level)
+	l := logger.NewWithFile(cfg.Log.Level, cfg.Log.Path)
 
 	// Postgres
 	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))

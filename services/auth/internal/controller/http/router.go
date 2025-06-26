@@ -2,6 +2,7 @@ package http
 
 import (
 	"auth/config"
+	m "auth/internal/controller/http/middleware"
 	v1 "auth/internal/controller/http/v1"
 	"auth/internal/usecase"
 	"auth/pkg/logger"
@@ -11,7 +12,7 @@ import (
 )
 
 func NewRouter(e *echo.Echo, cfg *config.Config, a usecase.Auth, l logger.Interface) {
-	e.Use(middleware.Logger())
+	e.Use(m.Logger(l))
 	e.Use(middleware.Recover())
 
 	//if cfg.Metrics.Enabled {

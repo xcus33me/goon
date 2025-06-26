@@ -1,8 +1,8 @@
 package app
 
 import (
+	"auth/pkg/logger"
 	"errors"
-	"log"
 	"os"
 	"time"
 
@@ -18,9 +18,11 @@ const (
 )
 
 func init() {
+	l := logger.NewWithFile("info", os.Getenv("LOG_PATH"))
+
 	databaseURL, ok := os.LookupEnv("PG_URL")
 	if !ok || len(databaseURL) == 0 {
-		log.Fatalf("migrate: environment variable not declared: PG_URL")
+		l.Fatal("migrate: environment variable not declared: PG_URL")
 	}
 
 	databaseURL += "?sslmode=disable"
@@ -37,25 +39,25 @@ func init() {
 			break
 		}
 
-		log.Printf("migrate: postgres is trying to connect, attempts left: %d", attempts)
+		l.Info("migrate: postgres is trying to connect, attempts left: ", attempts)
 		time.Sleep(_defaultTimeout)
 		attempts--
 	}
 
 	if err != nil {
-		log.Fatalf("migrate: postgres connect error: %s", err)
+		l.Fatal("migrate: postgres connect error: ", err)
 	}
 
 	err = m.Up()
 	defer m.Close()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("migrate: up error: %s", err)
+		l.Fatal("migrate: up error: ", err)
 	}
 
 	if errors.Is(err, migrate.ErrNoChange) {
-		log.Printf("migrate: no change")
+		l.Info("migrate: no change")
 		return
 	}
 
-	log.Printf("Migrate: up success")
+	l.Info("Migrate: up success")
 }

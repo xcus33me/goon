@@ -29,6 +29,7 @@ type HTTP struct {
 
 type Log struct {
 	Level string `env:"LOG_LEVEL,required"`
+	Path  string `env:"LOG_PATH,required"`
 }
 
 type PG struct {

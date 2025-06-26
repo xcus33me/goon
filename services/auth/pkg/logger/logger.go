@@ -2,9 +2,10 @@ package logger
 
 import (
 	"fmt"
-	"log/slog"
-	"os"
 	"strings"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Interface interface {
@@ -16,74 +17,124 @@ type Interface interface {
 }
 
 type Logger struct {
-	logger *slog.Logger
+	logger *zap.SugaredLogger
 }
 
 // check
 var _ Interface = (*Logger)(nil)
 
-func New(level string) *Logger {
-	var l slog.Level
+/*func New(level string) *Logger {
+	var l zapcore.Level
 
 	switch strings.ToLower(level) {
 	case "error":
-		l = slog.LevelError
+		l = zapcore.ErrorLevel
 	case "warn":
-		l = slog.LevelWarn
+		l = zapcore.WarnLevel
 	case "info":
-		l = slog.LevelInfo
+		l = zapcore.InfoLevel
 	case "debug":
-		l = slog.LevelDebug
+		l = zapcore.DebugLevel
 	default:
-		l = slog.LevelInfo
+		l = zapcore.InfoLevel
 	}
 
-	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     l,
-		AddSource: true,
-	})
+	cfg := zap.Config{
+		Level:    zap.NewAtomicLevelAt(l),
+		Encoding: "json",
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey: "msg",
+			TimeKey:    "ts",
+			EncodeTime: zapcore.ISO8601TimeEncoder,
+		},
+	}
 
-	logger := slog.New(handler)
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(fmt.Sprintf("logger - init: %v", err))
+	}
 
-	return &Logger{logger: logger}
+	return &Logger{
+		logger: logger.Sugar(),
+	}
+}*/
+
+func NewWithFile(level string, logFilePath string) Interface {
+	var l zapcore.Level
+	switch strings.ToLower(level) {
+	case "debug":
+		l = zapcore.DebugLevel
+	case "info":
+		l = zapcore.InfoLevel
+	case "warn":
+		l = zapcore.WarnLevel
+	case "error":
+		l = zapcore.ErrorLevel
+	default:
+		l = zapcore.InfoLevel
+	}
+
+	cfg := zap.Config{
+		Level:            zap.NewAtomicLevelAt(l),
+		Encoding:         "json",
+		OutputPaths:      []string{"stdout", logFilePath},
+		ErrorOutputPaths: []string{"stderr"},
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:    "msg",
+			LevelKey:      "level",
+			TimeKey:       "ts",
+			NameKey:       "logger",
+			CallerKey:     "caller",
+			StacktraceKey: "stacktrace",
+			EncodeLevel:   zapcore.CapitalLevelEncoder,
+			EncodeTime:    zapcore.ISO8601TimeEncoder,
+			EncodeCaller:  zapcore.ShortCallerEncoder,
+			EncodeName:    zapcore.FullNameEncoder,
+		},
+	}
+
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(fmt.Sprintf("logger - init: %v", err))
+	}
+
+	return &Logger{
+		logger: logger.Sugar(),
+	}
 }
 
 func (l *Logger) Debug(message interface{}, args ...interface{}) {
-	l.log(slog.LevelDebug, message, args...)
+	l.logger.Debugw(fmt.Sprintf("%v", message), args...)
 }
 
 func (l *Logger) Info(message interface{}, args ...interface{}) {
-	l.log(slog.LevelInfo, message, args...)
+	l.logger.Infow(fmt.Sprintf("%v", message), args...)
 }
 
 func (l *Logger) Warn(message interface{}, args ...interface{}) {
-	l.log(slog.LevelWarn, message, args...)
+	l.logger.Warnw(fmt.Sprintf("%v", message), args...)
 }
 
 func (l *Logger) Error(message interface{}, args ...interface{}) {
-	l.log(slog.LevelError, message, args...)
+	l.logger.Errorw(fmt.Sprintf("%v", message), args...)
 }
 
 func (l *Logger) Fatal(message interface{}, args ...interface{}) {
-	l.log(slog.LevelError, message, args...)
-	os.Exit(1)
+	l.logger.Fatalw(fmt.Sprintf("%v", message), args...)
 }
 
-func (l *Logger) log(level slog.Level, message interface{}, args ...interface{}) {
-	if !l.logger.Enabled(nil, level) {
-		return
+/*func getServiceName() string {
+	if name := os.Getenv("APP_NAME"); name != "" {
+		return name
 	}
 
-	switch msg := message.(type) {
-	case string:
-		if len(args) == 0 {
-			l.logger.Log(nil, level, msg)
-		} else {
-			l.logger.Log(nil, level, fmt.Sprintf(msg, args...))
-		}
-	case error:
-		l.logger.Log(nil, level, msg.Error(), slog.Any("error", msg))
-	default:
-		l.logger.Log(nil, level, fmt.Sprintf("unknown message type: %v", msg), slog.Any("value", msg))
-	}
+	return "unknown-service"
 }
+
+func getServiceVersion() string {
+	if version := os.Getenv("APP_VERSION"); version != "" {
+		return version
+	}
+
+	return "unknown-version"
+}*/
