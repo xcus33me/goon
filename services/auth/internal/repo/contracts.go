@@ -2,6 +2,7 @@ package repo
 
 import (
 	"auth/internal/entity"
+	"context"
 	"time"
 )
 
@@ -9,9 +10,9 @@ import (
 
 type (
 	AuthRepo interface {
-		CreateUser(user *entity.User) error
-		FindByLogin(login string) (*entity.User, error)
-		UpdatePasswordByID(request *UpdatePasswordRequest) (*UpdatePasswordResponse, error)
+		CreateUser(ctx context.Context, user *entity.User) error
+		FindByLogin(ctx context.Context, login string) (*entity.User, error)
+		UpdatePasswordByID(ctx context.Context, request *UpdatePasswordRequest) (*UpdatePasswordResponse, error)
 	}
 
 	AuthWebAPI interface {

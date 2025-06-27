@@ -4,6 +4,7 @@ import (
 	"auth/internal/entity"
 	"auth/internal/repo"
 	e "auth/pkg/errors"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -40,8 +41,8 @@ func (uc *UseCase) generateToken(user *entity.User) (string, error) {
 	return tokenString, nil
 }
 
-func (uc *UseCase) Login(login, password string) (*entity.User, string, error) {
-	user, err := uc.repo.FindByLogin(login)
+func (uc *UseCase) Login(ctx context.Context, login, password string) (*entity.User, string, error) {
+	user, err := uc.repo.FindByLogin(ctx, login)
 	if err != nil {
 		if errors.Is(err, repo.ErrNotFound) {
 			return nil, "", e.WrongCredentials
@@ -64,8 +65,8 @@ func (uc *UseCase) Login(login, password string) (*entity.User, string, error) {
 	return user, token, nil
 }
 
-func (uc *UseCase) Register(login, password string) (*entity.User, error) {
-	_, err := uc.repo.FindByLogin(login)
+func (uc *UseCase) Register(ctx context.Context, login, password string) (*entity.User, error) {
+	_, err := uc.repo.FindByLogin(ctx, login)
 	if err == nil {
 		return nil, e.UserAlreadyExists
 	}
@@ -80,14 +81,14 @@ func (uc *UseCase) Register(login, password string) (*entity.User, error) {
 		PasswordHash: string(hash),
 	}
 
-	if err := uc.repo.CreateUser(user); err != nil {
+	if err := uc.repo.CreateUser(ctx, user); err != nil {
 		return nil, err
 	}
 
 	return user, nil
 }
 
-func (uc *UseCase) UpdatePassword(userID int64, password string) error {
+func (uc *UseCase) UpdatePassword(ctx context.Context, userID int64, password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("%w: %v", e.HashingFailed, err)
@@ -98,7 +99,7 @@ func (uc *UseCase) UpdatePassword(userID int64, password string) error {
 		PasswordHash: string(hash),
 	}
 
-	_, err = uc.repo.UpdatePasswordByID(request)
+	_, err = uc.repo.UpdatePasswordByID(ctx, request)
 	if err != nil {
 		if errors.Is(err, repo.ErrNotFound) {
 			return e.UserNotFound
