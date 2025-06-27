@@ -4,6 +4,7 @@ import (
 	"auth/internal/entity"
 	"auth/internal/usecase/auth"
 	e "auth/pkg/errors"
+	"context"
 	"testing"
 	"time"
 
@@ -62,7 +63,7 @@ func TestLogin(t *testing.T) {
 			login:    "testuser",
 			password: "correctpassword",
 			mock: func() {
-				repo.EXPECT().FindByLogin("testuser").Return(user, nil)
+				repo.EXPECT().FindByLogin(gomock.Any(), "testuser").Return(user, nil)
 			},
 			res: user,
 			err: nil,
@@ -72,7 +73,7 @@ func TestLogin(t *testing.T) {
 			login:    "unknownuser",
 			password: "wrongpassword",
 			mock: func() {
-				repo.EXPECT().FindByLogin("unknownuser").Return(nil, e.UserNotFound)
+				repo.EXPECT().FindByLogin(gomock.Any(), "unknownuser").Return(nil, e.UserNotFound)
 			},
 			res: nil,
 			err: e.UserNotFound,
@@ -82,7 +83,7 @@ func TestLogin(t *testing.T) {
 			login:    "testuser",
 			password: "wrongpassword",
 			mock: func() {
-				repo.EXPECT().FindByLogin("testuser").Return(user, nil)
+				repo.EXPECT().FindByLogin(gomock.Any(), "testuser").Return(user, nil)
 			},
 			res: nil,
 			err: e.WrongCredentials,
@@ -94,7 +95,7 @@ func TestLogin(t *testing.T) {
 		t.Run(ltc.name, func(t *testing.T) {
 			ltc.mock()
 
-			user, token, err := authUseCase.Login(ltc.login, ltc.password)
+			user, token, err := authUseCase.Login(context.Background(), ltc.login, ltc.password)
 
 			if ltc.res != nil {
 				expectedUser := ltc.res.(*entity.User)
@@ -142,9 +143,9 @@ func TestRegister(t *testing.T) {
 			login:    "newuser123",
 			password: "newpassword321",
 			mock: func() {
-				repo.EXPECT().FindByLogin("newuser123").Return(nil, e.UserNotFound)
+				repo.EXPECT().FindByLogin(gomock.Any(), "newuser123").Return(nil, e.UserNotFound)
 
-				repo.EXPECT().CreateUser(gomock.Any()).
+				repo.EXPECT().CreateUser(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(user *entity.User) error {
 						require.Equal(t, "newuser123", user.Login, "Login should be identical")
 						require.NotEmpty(t, user.PasswordHash, "PasswordHash should not be empty")
@@ -169,7 +170,7 @@ func TestRegister(t *testing.T) {
 			login:    "existinguser",
 			password: "password",
 			mock: func() {
-				repo.EXPECT().FindByLogin("existinguser").Return(existingUser, nil)
+				repo.EXPECT().FindByLogin(gomock.Any(), "existinguser").Return(existingUser, nil)
 			},
 			res: nil,
 			err: e.UserAlreadyExists,
@@ -181,7 +182,7 @@ func TestRegister(t *testing.T) {
 		t.Run(ltc.name, func(t *testing.T) {
 			ltc.mock()
 
-			user, err := authUseCase.Register(ltc.login, ltc.password)
+			user, err := authUseCase.Register(context.Background(), ltc.login, ltc.password)
 			if ltc.err != nil {
 				require.ErrorIs(t, err, ltc.err, "Expected error '%v', received '%v'", ltc.err, err)
 				require.Nil(t, user, "User should be nil in case of error")

@@ -12,6 +12,7 @@ package usecase_test
 import (
 	entity "auth/internal/entity"
 	repo "auth/internal/repo"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -42,47 +43,47 @@ func (m *MockAuthRepo) EXPECT() *MockAuthRepoMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockAuthRepo) CreateUser(user *entity.User) error {
+func (m *MockAuthRepo) CreateUser(ctx context.Context, user *entity.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", user)
+	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockAuthRepoMockRecorder) CreateUser(user any) *gomock.Call {
+func (mr *MockAuthRepoMockRecorder) CreateUser(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuthRepo)(nil).CreateUser), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuthRepo)(nil).CreateUser), ctx, user)
 }
 
 // FindByLogin mocks base method.
-func (m *MockAuthRepo) FindByLogin(login string) (*entity.User, error) {
+func (m *MockAuthRepo) FindByLogin(ctx context.Context, login string) (*entity.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByLogin", login)
+	ret := m.ctrl.Call(m, "FindByLogin", ctx, login)
 	ret0, _ := ret[0].(*entity.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByLogin indicates an expected call of FindByLogin.
-func (mr *MockAuthRepoMockRecorder) FindByLogin(login any) *gomock.Call {
+func (mr *MockAuthRepoMockRecorder) FindByLogin(ctx, login any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByLogin", reflect.TypeOf((*MockAuthRepo)(nil).FindByLogin), login)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByLogin", reflect.TypeOf((*MockAuthRepo)(nil).FindByLogin), ctx, login)
 }
 
 // UpdatePasswordByID mocks base method.
-func (m *MockAuthRepo) UpdatePasswordByID(request *repo.UpdatePasswordRequest) (*repo.UpdatePasswordResponse, error) {
+func (m *MockAuthRepo) UpdatePasswordByID(ctx context.Context, request *repo.UpdatePasswordRequest) (*repo.UpdatePasswordResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePasswordByID", request)
+	ret := m.ctrl.Call(m, "UpdatePasswordByID", ctx, request)
 	ret0, _ := ret[0].(*repo.UpdatePasswordResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdatePasswordByID indicates an expected call of UpdatePasswordByID.
-func (mr *MockAuthRepoMockRecorder) UpdatePasswordByID(request any) *gomock.Call {
+func (mr *MockAuthRepoMockRecorder) UpdatePasswordByID(ctx, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePasswordByID", reflect.TypeOf((*MockAuthRepo)(nil).UpdatePasswordByID), request)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePasswordByID", reflect.TypeOf((*MockAuthRepo)(nil).UpdatePasswordByID), ctx, request)
 }
 
 // MockAuthWebAPI is a mock of AuthWebAPI interface.

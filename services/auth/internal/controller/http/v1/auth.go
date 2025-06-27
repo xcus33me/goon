@@ -21,7 +21,7 @@ func (api *V1) Login(c echo.Context) error {
 		return api.errorResponse(c, http.StatusBadRequest, err)
 	}
 
-	user, token, err := api.a.Login(body.Login, body.Password)
+	user, token, err := api.a.Login(c.Request().Context(), body.Login, body.Password)
 	if err != nil {
 		if errors.Is(err, e.HashingFailed) || errors.Is(err, e.FailedToGenerateToken) {
 			return api.errorResponse(c, http.StatusInternalServerError, err)
@@ -56,7 +56,7 @@ func (api *V1) Register(c echo.Context) error {
 		return api.errorResponse(c, http.StatusBadRequest, err)
 	}
 
-	user, err := api.a.Register(body.Login, body.Password)
+	user, err := api.a.Register(c.Request().Context(), body.Login, body.Password)
 	if err != nil {
 		if errors.Is(err, e.UserAlreadyExists) {
 			return api.errorResponse(c, http.StatusConflict, err)
