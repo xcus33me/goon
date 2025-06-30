@@ -2,8 +2,9 @@ package httpserver
 
 import (
 	"context"
-	"github.com/labstack/echo/v4"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 const (

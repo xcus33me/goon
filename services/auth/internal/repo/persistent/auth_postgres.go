@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type AuthRepo struct {
@@ -25,9 +25,9 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *entity.User) error {
 
 	err := r.Db.QueryRowContext(ctx, query, user.Login, user.PasswordHash).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23505" { // unique_violation
 				return repo.ErrDuplicateEntry
 			}
 		}

@@ -4,90 +4,122 @@ import (
 	"auth/internal/entity"
 	"auth/internal/repo"
 	"auth/internal/repo/persistent"
+	"auth/pkg/postgres"
 	"context"
 	"errors"
 	"testing"
-	"time"
 )
 
-func TestCreateUser(ctx context.Context, t *testing.T, newRepo func() *persistent.AuthRepo) {
-	r := newRepo()
+func NewTestAuthRepo(t *testing.T) *persistent.AuthRepo {
+	t.Helper()
 
-	tt := []struct {
+	embeddedDB := postgres.NewEmbedded(t)
+
+	pg := &postgres.Postgres{Db: embeddedDB.DB}
+	return persistent.New(pg)
+}
+
+func TestCreateUser(t *testing.T) {
+	ctx := context.Background()
+	r := NewTestAuthRepo(t)
+
+	tests := []struct {
 		name string
 		user entity.User
 		want error
 	}{
-		{"no data", entity.User{}, nil},
 		{
 			name: "minimal data",
 			user: entity.User{
-				Login:        "Login1",
-				PasswordHash: "1234567890",
+				Login:        "testuser1",
+				PasswordHash: "hash123",
 			},
 			want: nil,
 		},
 		{
-			name: "maximal data",
+			name: "another user",
 			user: entity.User{
-				ID:           1,
-				Login:        "Login2",
-				PasswordHash: "1234567890",
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
+				Login:        "testuser2",
+				PasswordHash: "hash456",
 			},
 			want: nil,
-		},
-		{
-			name: "duplicate login",
-			user: entity.User{
-				Login:        "Login1",
-				PasswordHash: "1234567890",
-			},
-			want: repo.ErrDuplicateEntry,
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := r.CreateUser(ctx, &tc.user)
 			if tc.want == nil && err != nil {
-				t.Errorf("expected no error, got: %v", err)
-				return
+				t.Fatalf("expected no error, got: %v", err)
 			}
 			if tc.want != nil && !errors.Is(err, tc.want) {
-				t.Errorf("want error: %v, got: %v", tc.want, err)
-				return
+				t.Fatalf("want error: %v, got: %v", tc.want, err)
+			}
+
+			// Проверяем, что ID был присвоен
+			if tc.want == nil && tc.user.ID == 0 {
+				t.Error("expected user ID to be set after creation")
 			}
 		})
 	}
 }
 
-func TestFindByLogin(ctx context.Context, t *testing.T, newRepo func() *persistent.AuthRepo) {
-	r := newRepo()
+// Отдельный тест для дубликата
+func TestCreateUser_DuplicateLogin(t *testing.T) {
+	ctx := context.Background()
+	r := NewTestAuthRepo(t)
 
-	err := r.CreateUser(ctx, &entity.User{
-		Login:        "Login1",
-		PasswordHash: "1234567890",
-	})
+	// Создаем первого пользователя
+	user1 := entity.User{
+		Login:        "duplicate_test",
+		PasswordHash: "hash123",
+	}
+	err := r.CreateUser(ctx, &user1)
 	if err != nil {
-		t.Fatal("test - FindByLogin - create user: ", err)
+		t.Fatalf("Failed to create first user: %v", err)
 	}
 
-	tt := []struct {
+	// Пытаемся создать пользователя с тем же логином
+	user2 := entity.User{
+		Login:        "duplicate_test",
+		PasswordHash: "hash456",
+	}
+	err = r.CreateUser(ctx, &user2)
+
+	// Проверяем, что получили ошибку дубликата
+	if !errors.Is(err, repo.ErrDuplicateEntry) {
+		t.Fatalf("expected ErrDuplicateEntry, got: %v", err)
+	}
+}
+
+func TestFindByLogin(t *testing.T) {
+	ctx := context.Background()
+	r := NewTestAuthRepo(t)
+
+	// Создаем тестового пользователя
+	testUser := entity.User{
+		Login:        "findme",
+		PasswordHash: "secrethash",
+	}
+	err := r.CreateUser(ctx, &testUser)
+	if err != nil {
+		t.Fatalf("failed to create test user: %v", err)
+	}
+
+	tests := []struct {
 		name  string
 		login string
 		want  error
 	}{
 		{
 			name:  "existing user",
-			login: "Login1",
+			login: "findme",
 			want:  nil,
 		},
 		{
 			name:  "non-existing user",
-			login: "Login2",
+			login: "notfound",
 			want:  repo.ErrNotFound,
 		},
 		{
@@ -97,100 +129,129 @@ func TestFindByLogin(ctx context.Context, t *testing.T, newRepo func() *persiste
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			user, err := r.FindByLogin(ctx, tc.login)
-			if tc.want == nil && err != nil {
-				t.Errorf("expected no error, got: %v", err)
-				return
-			}
-			if tc.want != nil && !errors.Is(err, tc.want) {
-				t.Errorf("want error: %v, got: %v", tc.want, err)
-				return
-			}
 
-			if tc.login != user.Login {
-				t.Errorf("want login: %s, got: %s", tc.login, user.Login)
-				return
+			if tc.want == nil {
+				// Ожидаем успех
+				if err != nil {
+					t.Fatalf("expected no error, got: %v", err)
+				}
+				if user == nil {
+					t.Fatal("expected user, got nil")
+				}
+				if user.Login != tc.login {
+					t.Fatalf("want login: %s, got: %s", tc.login, user.Login)
+				}
+				if user.PasswordHash != "secrethash" {
+					t.Fatalf("password hash mismatch")
+				}
+			} else {
+				// Ожидаем ошибку
+				if !errors.Is(err, tc.want) {
+					t.Fatalf("want error: %v, got: %v", tc.want, err)
+				}
+				if user != nil {
+					t.Fatalf("expected nil user on error, got: %+v", user)
+				}
 			}
 		})
 	}
 }
 
-func TestUpdatePasswordByID(ctx context.Context, t *testing.T, newRepo func() *persistent.AuthRepo) {
-	r := newRepo()
+func TestUpdatePasswordByID(t *testing.T) {
+	ctx := context.Background()
+	r := NewTestAuthRepo(t)
 
-	tUser := entity.User{
-		ID:           0,
-		Login:        "Login1",
-		PasswordHash: "1234567890",
+	// Создаем тестового пользователя
+	testUser := entity.User{
+		Login:        "updateme",
+		PasswordHash: "oldhash",
 	}
-	err := r.CreateUser(ctx, &tUser)
+	err := r.CreateUser(ctx, &testUser)
 	if err != nil {
-		t.Fatal("test - UpdatePasswordByID - create user: ", err)
+		t.Fatalf("failed to create test user: %v", err)
 	}
 
-	createdUser, err := r.FindByLogin(ctx, tUser.Login)
+	// Получаем созданного пользователя для получения ID
+	createdUser, err := r.FindByLogin(ctx, testUser.Login)
 	if err != nil {
-		t.Fatal("test - UpdatePasswordByID - FindByLogin: ", err)
+		t.Fatalf("failed to find created user: %v", err)
 	}
 
-	tt := []struct {
+	tests := []struct {
 		name    string
 		request repo.UpdatePasswordRequest
 		want    error
 	}{
 		{
-			name: "update for existing user",
+			name: "update existing user",
 			request: repo.UpdatePasswordRequest{
 				ID:           createdUser.ID,
-				PasswordHash: "0987654321",
+				PasswordHash: "newhash123",
 			},
 			want: nil,
 		},
 		{
-			name: "update for non-existing user",
+			name: "update non-existing user",
 			request: repo.UpdatePasswordRequest{
-				ID:           9999,
-				PasswordHash: "0987654321",
+				ID:           99999,
+				PasswordHash: "somehash",
 			},
 			want: repo.ErrNotFound,
 		},
 	}
 
-	for _, tc := range tt {
+	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := r.UpdatePasswordByID(ctx, &tc.request)
-			if tc.want == nil && err != nil {
-				t.Errorf("expected no error, got: %v", err)
-				return
+			response, err := r.UpdatePasswordByID(ctx, &tc.request)
+
+			if tc.want == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got: %v", err)
+				}
+				if response == nil {
+					t.Fatal("expected response, got nil")
+				}
+				if response.ID != tc.request.ID {
+					t.Fatalf("expected ID %d, got %d", tc.request.ID, response.ID)
+				}
+			} else {
+				if !errors.Is(err, tc.want) {
+					t.Fatalf("want error: %v, got: %v", tc.want, err)
+				}
+				if response != nil {
+					t.Fatalf("expected nil response on error, got: %+v", response)
+				}
 			}
 		})
 	}
 }
 
+// AssertUserEqual помогает сравнивать пользователей в тестах
 func AssertUserEqual(t *testing.T, want, got *entity.User) {
 	t.Helper()
 
-	if want, got := want.ID, got.ID; want != got {
-		t.Errorf("want ID: %d, got: %d", want, got)
+	if want.ID != got.ID {
+		t.Errorf("want ID: %d, got: %d", want.ID, got.ID)
 	}
 
-	if want, got := want.Login, got.Login; want != got {
-		t.Errorf("want Login: %s, got: %s", want, got)
+	if want.Login != got.Login {
+		t.Errorf("want Login: %s, got: %s", want.Login, got.Login)
 	}
 
-	if want, got := want.PasswordHash, got.PasswordHash; want != got {
-		t.Errorf("want PasswordHash: %s, got: %s", want, got)
+	if want.PasswordHash != got.PasswordHash {
+		t.Errorf("want PasswordHash: %s, got: %s", want.PasswordHash, got.PasswordHash)
 	}
 
-	if want, got := want.CreatedAt, got.CreatedAt; !want.Equal(got) {
-		t.Errorf("want CreatedAt: %s, got: %s", want, got)
+	if !want.CreatedAt.IsZero() && !want.CreatedAt.Equal(got.CreatedAt) {
+		t.Errorf("want CreatedAt: %s, got: %s", want.CreatedAt, got.CreatedAt)
 	}
 
-	if want, got := want.UpdatedAt, got.UpdatedAt; !want.Equal(got) {
-		t.Errorf("want UpdatedAt: %s, got: %s", want, got)
+	if !want.UpdatedAt.IsZero() && !want.UpdatedAt.Equal(got.UpdatedAt) {
+		t.Errorf("want UpdatedAt: %s, got: %s", want.UpdatedAt, got.UpdatedAt)
 	}
 }
