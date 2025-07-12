@@ -6,8 +6,10 @@ import (
 	"auth/internal/repo/persistent"
 	"auth/pkg/postgres"
 	"context"
-	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func NewTestAuthRepo(t *testing.T) *persistent.AuthRepo {
@@ -50,27 +52,31 @@ func TestCreateUser(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := r.CreateUser(ctx, &tc.user)
-			if tc.want == nil && err != nil {
-				t.Fatalf("expected no error, got: %v", err)
-			}
-			if tc.want != nil && !errors.Is(err, tc.want) {
-				t.Fatalf("want error: %v, got: %v", tc.want, err)
-			}
-
-			// Проверяем, что ID был присвоен
-			if tc.want == nil && tc.user.ID == 0 {
-				t.Error("expected user ID to be set after creation")
-			}
+			//if tc.want == nil && err != nil {
+			//	t.Fatalf("expected no error, got: %v", err)
+			//}
+			//if tc.want != nil && !errors.Is(err, tc.want) {
+			//	t.Fatalf("want error: %v, got: %v", tc.want, err)
+			//}
+			//
+			//// Проверяем, что ID был присвоен
+			//if tc.want == nil && tc.user.ID == 0 {
+			//	t.Error("expected user ID to be set after creation")
+			//}
+			require.NoError(t, err, "should be succeed")
+			assert.NotZero(t, tc.user.ID, "ID should be set")
+			assert.Equal(t, tc.user.Login, tc.user.Login, "Login should match")
+			assert.Equal(t, tc.user.PasswordHash, tc.user.PasswordHash, "PasswordHash should match")
+			assert.NotZero(t, tc.user.CreatedAt, "CreatedAt should be set")
+			assert.NotZero(t, tc.user.UpdatedAt, "UpdatedAt should be set")
 		})
 	}
 }
 
-// Отдельный тест для дубликата
 func TestCreateUser_DuplicateLogin(t *testing.T) {
 	ctx := context.Background()
 	r := NewTestAuthRepo(t)
 
-	// Создаем первого пользователя
 	user1 := entity.User{
 		Login:        "duplicate_test",
 		PasswordHash: "hash123",
@@ -79,33 +85,25 @@ func TestCreateUser_DuplicateLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create first user: %v", err)
 	}
-
-	// Пытаемся создать пользователя с тем же логином
 	user2 := entity.User{
 		Login:        "duplicate_test",
 		PasswordHash: "hash456",
 	}
 	err = r.CreateUser(ctx, &user2)
 
-	// Проверяем, что получили ошибку дубликата
-	if !errors.Is(err, repo.ErrDuplicateEntry) {
-		t.Fatalf("expected ErrDuplicateEntry, got: %v", err)
-	}
+	assert.ErrorIs(t, err, repo.ErrDuplicateEntry, "should return duplicate error")
 }
 
 func TestFindByLogin(t *testing.T) {
 	ctx := context.Background()
 	r := NewTestAuthRepo(t)
 
-	// Создаем тестового пользователя
 	testUser := entity.User{
 		Login:        "findme",
 		PasswordHash: "secrethash",
 	}
 	err := r.CreateUser(ctx, &testUser)
-	if err != nil {
-		t.Fatalf("failed to create test user: %v", err)
-	}
+	require.NoError(t, err, "test user creation should be succeed")
 
 	tests := []struct {
 		name  string
@@ -134,28 +132,17 @@ func TestFindByLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			user, err := r.FindByLogin(ctx, tc.login)
 
-			if tc.want == nil {
-				// Ожидаем успех
-				if err != nil {
-					t.Fatalf("expected no error, got: %v", err)
-				}
-				if user == nil {
-					t.Fatal("expected user, got nil")
-				}
-				if user.Login != tc.login {
-					t.Fatalf("want login: %s, got: %s", tc.login, user.Login)
-				}
-				if user.PasswordHash != "secrethash" {
-					t.Fatalf("password hash mismatch")
-				}
+			if tc.want != nil {
+				assert.ErrorIs(t, err, tc.want, "should return error")
+				assert.ErrorIs(t, err, repo.ErrNotFound, "should return expected error")
+				assert.Nil(t, user, "user should be nil")
 			} else {
-				// Ожидаем ошибку
-				if !errors.Is(err, tc.want) {
-					t.Fatalf("want error: %v, got: %v", tc.want, err)
-				}
-				if user != nil {
-					t.Fatalf("expected nil user on error, got: %+v", user)
-				}
+				require.NoError(t, err, "should not return an error")
+				require.NotNil(t, user, "user should not be nil")
+
+				assert.Equal(t, tc.login, user.Login, "login should match")
+				assert.Equal(t, "secrethash", user.PasswordHash, "password hash should match")
+				assert.NotZero(t, user.ID, "user ID should be set")
 			}
 		})
 	}
@@ -182,50 +169,45 @@ func TestUpdatePasswordByID(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		request repo.UpdatePasswordRequest
-		want    error
+		name        string
+		userID      int64
+		newPassword string
+		want        error
 	}{
 		{
-			name: "update existing user",
-			request: repo.UpdatePasswordRequest{
-				ID:           createdUser.ID,
-				PasswordHash: "newhash123",
-			},
-			want: nil,
+			name:        "update existing user",
+			userID:      createdUser.ID,
+			newPassword: "newhash123",
+			want:        nil,
 		},
 		{
-			name: "update non-existing user",
-			request: repo.UpdatePasswordRequest{
-				ID:           99999,
-				PasswordHash: "somehash",
-			},
-			want: repo.ErrNotFound,
+			name:        "update non-existing user",
+			userID:      99999,
+			newPassword: "somehash",
+			want:        repo.ErrNotFound,
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := r.UpdatePasswordByID(ctx, &tc.request)
+			request := repo.UpdatePasswordRequest{
+				ID:           tc.userID,
+				PasswordHash: tc.newPassword,
+			}
 
-			if tc.want == nil {
-				if err != nil {
-					t.Fatalf("expected no error, got: %v", err)
-				}
-				if response == nil {
-					t.Fatal("expected response, got nil")
-				}
-				if response.ID != tc.request.ID {
-					t.Fatalf("expected ID %d, got %d", tc.request.ID, response.ID)
-				}
+			response, err := r.UpdatePasswordByID(ctx, &request)
+
+			if tc.want != nil {
+				assert.Error(t, err, "Should return an error")
+				assert.ErrorIs(t, err, tc.want, "Should return expected error type")
+				assert.Nil(t, response, "Response should be nil on error")
 			} else {
-				if !errors.Is(err, tc.want) {
-					t.Fatalf("want error: %v, got: %v", tc.want, err)
-				}
-				if response != nil {
-					t.Fatalf("expected nil response on error, got: %+v", response)
-				}
+				require.NoError(t, err, "Should not return an error")
+				require.NotNil(t, response, "Response should not be nil")
+
+				assert.Equal(t, tc.userID, response.ID, "Response ID should match request ID")
+				assert.NotZero(t, response.UpdatedAt, "UpdatedAt should be set")
 			}
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"auth/internal/entity"
 	"auth/internal/repo"
 	e "auth/pkg/errors"
+	"auth/pkg/kafka"
 	"context"
 	"errors"
 	"fmt"
@@ -15,13 +16,14 @@ import (
 
 type UseCase struct {
 	repo repo.AuthRepo
-	//webAPI    repo.AuthWebAPI
+	kafkaProducer *kafka.Producer
 	jwtSecret string
 }
 
-func New(repo repo.AuthRepo, jwtSecret string) *UseCase {
+func New(repo repo.AuthRepo, kafkaProducer *kafka.Producer, jwtSecret string) *UseCase {
 	return &UseCase{
 		repo:      repo,
+		kafkaProducer: kafkaProducer,
 		jwtSecret: jwtSecret,
 	}
 }
@@ -83,6 +85,14 @@ func (uc *UseCase) Register(ctx context.Context, login, password string) (*entit
 
 	if err := uc.repo.CreateUser(ctx, user); err != nil {
 		return nil, err
+	}
+
+	// kafka
+	go func() {
+		eventCtx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+		defer cancel()
+
+
 	}
 
 	return user, nil

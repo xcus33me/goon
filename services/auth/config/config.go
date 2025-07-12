@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -37,10 +38,53 @@ type PG struct {
 	URL     string `env:"PG_URL,required"`
 }
 
-type RMQ struct {
-	ServerExchange string `env:"RMQ_RPC_SERVER,required"`
-	ClientExchange string `env:"RMQ_RPC_CLIENT,required"`
-	URL            string `env:"RMQ_URL,required"`
+type Kafka struct {
+	Brokers  []string `env:"KAFKA_BROKERS,required" envSeparator:","`
+	Producer ProducerConfig
+	Conumer  ConsumerConfig
+}
+
+type ProducerConfig struct {
+	// NoResponse(0), WaitForLocal(1), WaitForAll(-1)
+	RequireAcks int `env:"KAFKA_PRODUCER_ACKS" envDefault:"-1"`
+
+	// Retry
+	MaxRetries   int           `env:"KAFKA_PRODUCER_MAX_RETRIES" envDefault:"3"`
+	RetryBackoff time.Duration `env:"KAFKA_PRODUCER_RETRY_BACKOFF" envDefault:"100ms"`
+
+	// Timeouts
+	WriteTimeout time.Duration `env:"KAFKA_PRODUCER_WRITE_TIMEOUT" envDefault:"10s"`
+	ReadTimeout  time.Duration `env:"KAFKA_PRODUCER_READ_TIMEOUT" envDefault:"10s"`
+
+	// Batching
+	// BatchSize    int           `env:"KAFKA_PRODUCER_BATCH_SIZE" envDefault:"16384"` // 16KB
+	// BatchTimeout time.Duration `env:"KAFKA_PRODUCER_BATCH_TIMEOUT" envDefault:"10ms"`
+	// BatchBytes   int           `env:"KAFKA_PRODUCER_BATCH_BYTES" envDefault:"1048576"` // 1MB
+
+	// Connection pooling
+	// MaxOpenRequests int `env:"KAFKA_PRODUCER_MAX_OPEN_REQUESTS" envDefault:"5"`
+
+	// Auto topic creation
+	AllowAutoTopicCreation bool `env:"KAFKA_PRODUCER_AUTO_TOPIC_CREATION" envDefault:"false"`
+}
+
+type ConsumerConfig struct {
+	GroupID string `env:"KAFKA_CONSUMER_GROUP_ID,required"`
+
+	// Batch processing
+	// MinBytes        int           `env:"KAFKA_CONSUMER_MIN_BYTES" envDefault:"1"`
+	// MaxBytes        int           `env:"KAFKA_CONSUMER_MAX_BYTES" envDefault:"1048576"`       // 1MB
+	// MaxWait         time.Duration `env:"KAFKA_CONSUMER_MAX_WAIT" envDefault:"500ms"`
+
+	// Commit
+	CommitInterval    time.Duration `env:"KAFKA_CONSUMER_COMMIT_INTERVAL" envDefault:"1s"`
+	Partition         int           `env:"KAFKA_CONSUMER_PARTITION" envDefault:"-1"` // -1 = all partitions
+	HeartbeatInterval time.Duration `env:"KAFKA_CONSUMER_HEARTBEAT_INTERVAL" envDefault:"3s"`
+	SessionTimeout    time.Duration `env:"KAFKA_CONSUMER_SESSION_TIMEOUT" envDefault:"30s"`
+
+	// Retry
+	MaxRetries   int           `env:"KAFKA_CONSUMER_MAX_RETRIES" envDefault:"3"`
+	RetryBackoff time.Duration `env:"KAFKA_CONSUMER_RETRY_BACKOFF" envDefault:"250ms"`
 }
 
 type Metrics struct {
