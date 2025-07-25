@@ -1,5 +1,4 @@
-# Modules caching
-FROM golang:1.24.2-alpine3.21 as modules
+FROM golang:1.24.5-alpine3.21 as modules
 
 COPY go.mod go.sum /modules/
 
@@ -7,11 +6,9 @@ WORKDIR /modules
 
 RUN go mod download
 
-# Builder
-FROM golang:1.24.2-alpine3.21 as builder
+FROM golang:1.24.5-alpine3.21 as builder
 
-COPY --from=modules /go/pkg go/pkg
-
+COPY --from=modules /go/pkg /go/pkg
 COPY . /app
 
 WORKDIR /app
@@ -23,7 +20,7 @@ FROM scratch
 
 COPY --from=builder /app/config /config
 COPY --from=builder /app/migrations /migrations
-COPY --from=builder /bin/app /app
+COPY --from=builder /bin/app /app/app
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-CMD ["/app"]
+CMD ["/app/app"]

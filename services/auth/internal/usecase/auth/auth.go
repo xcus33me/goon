@@ -88,12 +88,10 @@ func (uc *UseCase) Register(ctx context.Context, login, password string) (*entit
 	}
 
 	// kafka
-	go func() {
-		eventCtx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
-		defer cancel()
-
-
-	}
+	// go func() {
+	//	eventCtx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	//	defer cancel()
+	//}
 
 	return user, nil
 }

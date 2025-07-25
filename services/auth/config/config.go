@@ -12,7 +12,7 @@ type Config struct {
 	HTTP HTTP
 	Log  Log
 	PG   PG
-	//RMQ     RMQ
+	Kafka Kafka
 	Metrics Metrics
 	Swagger Swagger
 	Auth    Auth

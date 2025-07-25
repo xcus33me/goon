@@ -6,6 +6,7 @@ import (
 	"auth/internal/repo/persistent"
 	"auth/internal/usecase/auth"
 	"auth/pkg/httpserver"
+	"auth/pkg/kafka"
 	"auth/pkg/logger"
 	"auth/pkg/postgres"
 	"fmt"
@@ -25,11 +26,15 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	// Kafka Producer
+	producer := kafka.NewProducer(&cfg.Kafka, l)
+
 	l.Info("Auth service in action🔥🚀")
 
 	// Usecase
 	authUseCase := auth.New(
 		persistent.New(pg),
+		producer,
 		cfg.Auth.JWTSecret,
 	)
 
