@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/labstack/echo/v4 v4.13.4
+	github.com/xcus33me/protos v0.1.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.74.2
 )

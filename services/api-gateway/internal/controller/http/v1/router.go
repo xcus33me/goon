@@ -1,7 +1,7 @@
 package v1
 
 import (
-	v1 "api-gateway/docs/proto/v1"
+	v1 "github.com/xcus33me/protos/gen/go/auth"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
